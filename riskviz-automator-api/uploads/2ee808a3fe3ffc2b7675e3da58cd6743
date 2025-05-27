@@ -1,0 +1,101 @@
+Respondent Type,Hotspot,AO Location,Phase,RP Score,Likelihood,Severity,Risk Level,Metric Name,Timeline
+Customers,Hotspot 3,Surat,4,1.4,2,2,low,Response Time,12 months
+Transporters,Hotspot 8,Delhi,3,1,2,1,low,Network Size,12 months
+Demand Center Operators,Hotspot 8,Kanpur,4,1,1,1,low,Resource Allocation,15 months
+Demand Center Operators,Hotspot 10,Kanpur,4,1,2,1,low,Policy Efficiency,9 months
+Community/Vulnerable community,Hotspot 9,Bhopal,4,1.4,2,2,low,Financial Transactions,12 months
+Business,Hotspot 1,Mumbai,4,2.2,2,3,low,Demand Fluctuations,15 months
+Law Enforcement Officers,Hotspot 8,Mumbai,1,3.2,3,3,low,Network Size,9 months
+Law Enforcement Officers,Hotspot 5,Ahmedabad,2,3.2,3,3,low,Response Readiness,9 months
+Government,Hotspot 6,Nagpur,4,1,1,2,low,Supply Chain Risk,12 months
+NGO,Hotspot 9,Ahmedabad,2,2.2,3,2,low,Outreach Programs,6 months
+Lawyers,Hotspot 10,Ahmedabad,3,1.4,2,2,low,Operator Availability,9 months
+Lawyers,Hotspot 3,Jaipur,1,3.2,3,3,low,Employee Safety,6 months
+Business,Hotspot 2,Pune,4,1.1,3,1,low,Outreach Programs,15 months
+Lawyers,Hotspot 7,Hyderabad,4,1,2,1,low,Awareness Level,18 months
+Survivors/Families of Survivors,Hotspot 10,Pune,4,1.4,2,2,low,Incident Reports,3 months
+NGO,Hotspot 2,Bhopal,4,2.2,3,2,low,Resource Allocation,12 months
+Financial Networks,Hotspot 2,Indore,3,3.2,3,3,low,Resource Allocation,15 months
+Law Enforcement Officers,Hotspot 8,Chennai,3,1.1,3,1,low,Supply Chain Risk,3 months
+Customers,Hotspot 2,Nagpur,3,1,1,1,low,Community Engagement,15 months
+Criminal Networks/Traffickers,Hotspot 7,Delhi,2,1,1,1,low,Resource Allocation,3 months
+Financial Networks,Hotspot 8,Indore,1,2.2,3,2,low,Response Time,15 months
+NGO,Hotspot 5,Mumbai,4,2.2,2,3,low,Response Time,3 months
+Security,Hotspot 8,Indore,4,1,1,1,low,Awareness Level,15 months
+Criminal Networks/Traffickers,Hotspot 2,Surat,1,2.2,2,3,low,Supply Chain Risk,12 months
+Survivors/Families of Survivors,Hotspot 5,Mumbai,3,2.2,3,2,low,Resource Allocation,3 months
+Financial Networks,Hotspot 7,Hyderabad,4,1.4,2,2,low,Demand Fluctuations,15 months
+Survivors/Families of Survivors,Hotspot 8,Patna,2,1,1,1,low,Demand Fluctuations,12 months
+Criminal Networks/Traffickers,Hotspot 3,Jaipur,2,1,1,2,low,Regulatory Impact,12 months
+Demand Center Operators,Hotspot 1,Chennai,3,1,1,2,low,Supply Chain Risk,18 months
+Lawyers,Hotspot 10,Patna,3,1.4,2,2,low,Supply Chain Risk,12 months
+Transporters,Hotspot 2,Ahmedabad,4,2.2,2,3,low,Policy Efficiency,3 months
+Financial Networks,Hotspot 2,Nagpur,1,1,1,2,low,Community Engagement,15 months
+Transporters,Hotspot 3,Bhopal,1,2.2,3,2,low,Tech Adoption,18 months
+NGO,Hotspot 6,Hyderabad,3,1,1,1,low,Policy Efficiency,6 months
+Financial Networks,Hotspot 7,Kolkata,4,2.2,3,2,low,Response Time,18 months
+Survivors/Families of Survivors,Hotspot 4,Indore,2,3.2,3,3,low,Network Size,15 months
+NGO,Hotspot 1,Nagpur,2,1,1,1,low,Outreach Programs,9 months
+Criminal Networks/Traffickers,Hotspot 10,Patna,3,3.2,3,3,low,Operator Availability,3 months
+Government,Hotspot 2,Jaipur,4,1.4,2,2,low,Volunteer Participation,3 months
+Survivors/Families of Survivors,Hotspot 2,Hyderabad,2,1,2,1,low,Awareness Level,12 months
+Law Enforcement Officers,Hotspot 10,Patna,2,1.4,2,2,low,Network Size,18 months
+Demand Center Operators,Hotspot 8,Bangalore,3,1,1,1,low,Quality Assurance,12 months
+Criminal Networks/Traffickers,Hotspot 5,Mumbai,1,1,1,2,low,Regulatory Impact,6 months
+Government,Hotspot 2,Surat,3,1,1,2,low,Community Engagement,18 months
+Business,Hotspot 3,Ahmedabad,4,1,1,1,low,Financial Transactions,3 months
+Customers,Hotspot 8,Indore,2,1.1,1,3,low,Resource Allocation,15 months
+NGO,Hotspot 10,Indore,2,1,1,2,low,Operator Availability,15 months
+Government,Hotspot 9,Kanpur,3,3.2,3,3,low,Employee Safety,3 months
+Customers,Hotspot 8,Bangalore,1,2.2,2,3,low,Demand Fluctuations,18 months
+NGO,Hotspot 2,Bhopal,4,2.2,2,3,low,Awareness Level,9 months
+Lawyers,Hotspot 3,Bhopal,1,1,1,1,low,Policy Updates,12 months
+Customers,Hotspot 10,Patna,1,2.2,3,2,low,Outreach Programs,3 months
+Demand Center Operators,Hotspot 2,Bhopal,1,2.2,2,3,low,Network Size,9 months
+Government,Hotspot 2,Pune,3,1,1,1,low,Resource Allocation,3 months
+NGO,Hotspot 5,Surat,1,3.2,3,3,low,Financial Transactions,15 months
+NGO,Hotspot 8,Surat,1,1,1,1,low,Operator Availability,6 months
+Demand Center Operators,Hotspot 6,Mumbai,4,2.2,2,3,low,Operator Availability,9 months
+Lawyers,Hotspot 6,Indore,3,2.2,3,2,low,Volunteer Participation,9 months
+Customers,Hotspot 1,Jaipur,4,1.4,2,2,low,Community Engagement,12 months
+NGO,Hotspot 4,Lucknow,2,1,2,1,low,Policy Efficiency,6 months
+Lawyers,Hotspot 1,Hyderabad,4,1,1,1,low,Network Size,15 months
+Business,Hotspot 3,Kolkata,1,1.4,2,2,low,Tech Adoption,12 months
+Customers,Hotspot 5,Bhopal,3,2.2,2,3,low,Regulatory Impact,18 months
+Financial Networks,Hotspot 4,Hyderabad,3,1,2,1,low,Awareness Level,9 months
+Community/Vulnerable community,Hotspot 9,Ahmedabad,3,1,1,1,low,Community Engagement,12 months
+Survivors/Families of Survivors,Hotspot 1,Delhi,1,2.2,2,3,low,Supply Chain Risk,12 months
+Law Enforcement Officers,Hotspot 10,Delhi,3,1.4,2,2,low,Regulatory Impact,12 months
+Financial Networks,Hotspot 10,Jaipur,4,2.2,2,3,low,Community Engagement,3 months
+NGO,Hotspot 3,Patna,4,1.1,1,3,low,Employee Safety,9 months
+Survivors/Families of Survivors,Hotspot 6,Pune,4,1,1,1,low,Resource Allocation,9 months
+Community/Vulnerable community,Hotspot 3,Kanpur,1,1,1,2,low,Policy Efficiency,9 months
+NGO,Hotspot 6,Kanpur,3,1,1,2,low,Community Engagement,12 months
+Business,Hotspot 6,Kolkata,2,2.2,3,2,low,Response Readiness,3 months
+Business,Hotspot 2,Mumbai,3,1.4,2,2,low,Quality Assurance,15 months
+Lawyers,Hotspot 9,Mumbai,2,2.2,2,3,low,Market Exposure,15 months
+Financial Networks,Hotspot 10,Delhi,2,1,2,1,low,Resource Allocation,15 months
+Criminal Networks/Traffickers,Hotspot 8,Nagpur,3,3.2,3,3,low,Incident Reports,18 months
+NGO,Hotspot 1,Delhi,3,1.1,1,3,low,Response Readiness,12 months
+Community/Vulnerable community,Hotspot 2,Bangalore,3,1.1,1,3,low,Policy Efficiency,15 months
+Financial Networks,Hotspot 4,Mumbai,1,1.4,2,2,low,Employee Safety,15 months
+Demand Center Operators,Hotspot 3,Bangalore,1,1,1,2,low,Outreach Programs,3 months
+Community/Vulnerable community,Hotspot 6,Ahmedabad,3,1,1,1,low,Financial Transactions,18 months
+Law Enforcement Officers,Hotspot 6,Pune,2,1,2,1,low,Response Readiness,3 months
+Customers,Hotspot 10,Jaipur,1,1,2,1,low,Policy Efficiency,12 months
+Security,Hotspot 1,Pune,2,1,1,1,low,Network Size,15 months
+Security,Hotspot 5,Lucknow,2,1.1,3,1,low,Operator Availability,18 months
+Demand Center Operators,Hotspot 3,Indore,1,1,1,1,low,Awareness Level,6 months
+NGO,Hotspot 4,Kanpur,3,1.4,2,2,low,Policy Updates,15 months
+Business,Hotspot 2,Pune,2,1,1,2,low,Outreach Programs,15 months
+Demand Center Operators,Hotspot 6,Kanpur,4,3.2,3,3,low,Incident Reports,12 months
+Security,Hotspot 7,Nagpur,4,1,2,1,low,Community Engagement,12 months
+Security,Hotspot 7,Surat,4,1,1,1,low,Policy Updates,3 months
+Financial Networks,Hotspot 5,Surat,4,1,1,2,low,Regulatory Impact,15 months
+Transporters,Hotspot 4,Mumbai,1,1,2,1,low,Resource Allocation,12 months
+Survivors/Families of Survivors,Hotspot 1,Nagpur,4,1,1,2,low,Policy Efficiency,12 months
+Law Enforcement Officers,Hotspot 7,Kolkata,2,1.4,2,2,low,Incident Reports,18 months
+Government,Hotspot 1,Delhi,1,1.1,3,1,low,Response Readiness,15 months
+Criminal Networks/Traffickers,Hotspot 6,Indore,1,2.2,3,2,low,Policy Updates,6 months
+Customers,Hotspot 4,Kolkata,4,1.4,2,2,low,Market Exposure,6 months
+Community/Vulnerable community,Hotspot 8,Bangalore,4,1.1,3,1,low,Quality Assurance,3 months

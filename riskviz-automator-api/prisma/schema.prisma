@@ -1,0 +1,23 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model RiskRecord {
+  id               Int     @id @default(autoincrement())
+  respondentType   String
+  hotspot          String
+  aoLocation       String
+  phase            Int
+  rpScore          Float
+  likelihood       Int
+  severity         Int
+  riskLevel        String
+  metricName       String
+  timeline         String
+  createdAt        DateTime @default(now())
+}

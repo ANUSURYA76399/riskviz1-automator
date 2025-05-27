@@ -1,0 +1,171 @@
+import express from 'express';
+import { Request, Response, NextFunction, RequestHandler } from 'express';
+import multer from 'multer';
+import csv from 'csv-parser';
+import fs from 'fs';
+import pg from 'pg';
+import path from 'path';
+
+// Create a helper function to handle Express route handlers correctly
+const asyncHandler = (fn: (req: Request, res: Response, next: NextFunction) => Promise<any>): RequestHandler => 
+  (req, res, next) => {
+    Promise.resolve(fn(req, res, next)).catch(next);
+  };
+
+// Initialize router and multer upload
+const router = express.Router();
+const { Pool } = pg;
+const upload = multer({ dest: 'uploads/' });
+
+// PostgreSQL pool
+const pool = new Pool({
+  user: 'postgres',
+  host: 'localhost',
+  database: 'postgres',
+  password: 'Anubhava95',
+  port: 5432,
+});
+
+// Initialize database table if it doesn't exist
+async function initDb(): Promise<void> {
+  try {
+    // Create risk_data table if it doesn't exist
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS risk_data (
+        id SERIAL PRIMARY KEY,
+        respondent_type TEXT,
+        hotspot TEXT,
+        ao_location TEXT,
+        phase INTEGER,
+        risk_score FLOAT,
+        likelihood FLOAT,
+        severity FLOAT,
+        risk_level TEXT,
+        metric_name TEXT,
+        timeline TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+    console.log("Database table initialized");
+  } catch (err) {
+    console.error("Error initializing database:", err);
+  }
+}
+
+// Call initDb on startup
+initDb();
+
+// Route: POST /upload - using the proper way to type Express handlers
+router.post('/upload', upload.single('file'), function(req: Request, res: Response, next: NextFunction): void {
+  if (!req.file) {
+    res.status(400).json({ error: 'No file uploaded' });
+    return;
+  }
+  
+  const filePath = req.file.path; // Store path for later cleanup
+  const fileRows: any[] = [];
+
+  fs.createReadStream(filePath)
+    .pipe(csv())
+    .on('data', (row) => {
+      fileRows.push(row);
+    })
+    .on('end', async () => {
+      try {
+        // Check if this is risk data format
+        const isRiskData = fileRows.length > 0 && (
+          'Respondent Type' in fileRows[0] ||
+          'Risk Score' in fileRows[0] ||
+          'Metric Name' in fileRows[0]
+        );
+        
+        if (isRiskData) {
+          console.log(`Processing ${fileRows.length} rows of risk data`);
+          
+          for (const row of fileRows) {
+            console.log('Inserting risk data row:', row);
+            await pool.query(
+              `INSERT INTO risk_data 
+              (respondent_type, hotspot, ao_location, phase, risk_score, likelihood, severity, risk_level, metric_name, timeline)
+              VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`,
+              [
+                row['Respondent Type'] || '',
+                row['Hotspot'] || '',
+                row['AO Location'] || row['AO'] || '',
+                parseInt(row['Phase'] || '1'),
+                parseFloat(row['Risk Score'] || row['RP Score'] || '0'),
+                parseFloat(row['Likelihood'] || '0'),
+                parseFloat(row['Severity'] || '0'),
+                row['Risk Level'] || '',
+                row['Metric Name'] || row['Metric'] || '',
+                row['Timeline'] || ''
+              ]
+            );
+          }
+          
+          console.log(`Inserted ${fileRows.length} risk data rows into database`);
+          
+        } else {
+          // Process as simple x,y data
+          console.log(`Processing ${fileRows.length} rows of x,y data`);
+          
+          // Create graph_points table if needed
+          await pool.query(`
+            CREATE TABLE IF NOT EXISTS graph_points (
+              id SERIAL PRIMARY KEY,
+              x FLOAT,
+              y FLOAT,
+              created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+          `);
+          
+          for (const row of fileRows) {
+            console.log('Inserting graph point:', row);
+            await pool.query(
+              "INSERT INTO graph_points (x, y) VALUES ($1, $2)",
+              [parseFloat(row.x) || 0, parseFloat(row.y) || 0]
+            );
+          }
+          
+          console.log(`Inserted ${fileRows.length} data points into database`);
+        }
+
+        // Clean up the uploaded file
+        fs.unlink(filePath, (err) => {
+          if (err) console.error("Error deleting file:", err);
+        });
+        
+        res.json({ 
+          success: true, 
+          message: `Data inserted successfully: ${fileRows.length} rows processed`,
+          rows: fileRows.length
+        });
+      } catch (err: any) {
+        console.error("Error processing data:", err);
+        res.status(500).json({ error: 'Failed to insert data: ' + err.message });
+      }
+    })
+    .on('error', (error: Error) => {
+      console.error("Error reading CSV file:", error);
+      res.status(500).json({ error: 'Failed to parse file: ' + error.message });
+    });
+});
+
+// Get risk data endpoint
+router.get('/risk-data', asyncHandler(async (req: Request, res: Response) => {
+  const result = await pool.query("SELECT * FROM risk_data ORDER BY created_at DESC");
+  res.json(result.rows);
+}));
+
+// Get data points endpoint
+router.get('/points', asyncHandler(async (req: Request, res: Response) => {
+  const result = await pool.query("SELECT * FROM graph_points ORDER BY created_at DESC");
+  res.json(result.rows);
+}));
+
+// Health check endpoint
+router.get('/health', (req: Request, res: Response) => {
+  res.json({ status: 'ok', message: 'Data API is running' });
+});
+
+export default router;
