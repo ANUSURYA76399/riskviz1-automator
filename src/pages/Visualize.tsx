@@ -451,8 +451,13 @@ const Visualize = () => {
                  key={`combined-${uploadId}`} 
                />;
       case 'metric-score':
-        console.log("Rendering Metric Score Chart");
-        return <MetricScoreSection key={`metric-score-${uploadId}`} />;
+        console.log("Rendering Metric-wise RP scores across hotspots");
+        return <MetricWiseScoreChart 
+                 key={`metric-score-${uploadId}`} 
+                 selectedHotspot={selectedHotspot}
+                 title="CRIMINAL NETWORKS"
+                 height={450}
+               />;
       case 'metric-wise-score':
         console.log("Rendering Metric Wise Score Chart for", selectedHotspot);
         return <MetricWiseScoreChart 

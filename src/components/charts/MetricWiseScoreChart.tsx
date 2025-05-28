@@ -10,7 +10,8 @@ import {
   ResponsiveContainer,
   ReferenceLine,
   Label,
-  Scatter
+  Scatter,
+  Text
 } from 'recharts';
 import { useDataContext } from '@/contexts/DataContext';
 import { getRiskData } from '@/services/api';
@@ -31,9 +32,9 @@ interface MetricWiseScoreChartProps {
 
 export const MetricWiseScoreChart: React.FC<MetricWiseScoreChartProps> = ({
   height = 400,
-  title = 'Metric-wise RP Scores',
+  title = 'CRIMINAL NETWORKS',
   selectedHotspot = 'HS1',
-  showDataTable = true
+  showDataTable = false
 }) => {
   const [chartData, setChartData] = useState<ChartDataPoint[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
@@ -42,9 +43,10 @@ export const MetricWiseScoreChart: React.FC<MetricWiseScoreChartProps> = ({
 
   // Colors for data points
   const colors = {
-    primary: '#FF5733',
-    secondary: '#4CAF50',
-    tertiary: '#3498DB'
+    primary: '#4CAF50',
+    secondary: '#FF5733',
+    tertiary: '#3498DB',
+    border: '#FF0000'
   };
 
   // Fetch data directly from backend
@@ -222,41 +224,54 @@ export const MetricWiseScoreChart: React.FC<MetricWiseScoreChartProps> = ({
           data={chartData}
           margin={{ top: 20, right: 30, left: 20, bottom: 40 }}
         >
-          <CartesianGrid strokeDasharray="3 3" />
+          <CartesianGrid stroke="#ccc" />
           <XAxis 
             dataKey="metricIndex" 
             label={{ value: 'Metric', position: 'insideBottom', offset: -10 }}
             tickFormatter={(value) => `${value}`}
+            domain={[0, 4]} // Set x-axis domain from 0 to 4
+            ticks={[0, 1, 2, 3, 4]} // Show ticks at these values
+            type="number"
           />
           <YAxis 
-            label={{ value: 'Mean RP Score', angle: -90, position: 'insideLeft' }} 
-            domain={[0, 9]}
+            label={{ value: 'Mean RP score', angle: -90, position: 'insideLeft', offset: -5 }} 
+            domain={[0, 9]} // Set y-axis domain from 0 to 9
+            ticks={[0, 1, 2, 3, 4, 5, 6, 7, 8, 9]} // Show ticks at these values
           />
           <Tooltip content={customTooltip} />
           
-          {/* Add a reference line for the high risk threshold */}
-          <ReferenceLine y={6} stroke="red" strokeDasharray="3 3">
-            <Label value="High Risk" position="right" />
-          </ReferenceLine>
+          {/* Don't show reference lines as they're not in the image */}
           
-          {/* Add a reference line for the moderate risk threshold */}
-          <ReferenceLine y={3} stroke="orange" strokeDasharray="3 3">
-            <Label value="Moderate Risk" position="right" />
-          </ReferenceLine>
-          
-          {/* Main line showing the metric scores */}
+          {/* Main line showing the metric scores - no line, just points */}
           <Line 
             type="monotone" 
             dataKey="score" 
-            stroke={colors.primary}
-            strokeWidth={2}
-            activeDot={{ r: 8, fill: '#FF5733', stroke: '#C0392B' }}
-            dot={{ r: 6, fill: '#FF5733', stroke: '#C0392B' }}
-            label={({ x, y, value }) => (
-              <text x={x} y={y-15} fill="#666" textAnchor="middle" dominantBaseline="middle">
-                {value}
-              </text>
-            )}
+            stroke="transparent" // No visible line connecting points
+            strokeWidth={0}
+            activeDot={{ r: 8 }}
+            dot={(props) => {
+              const { cx, cy, payload } = props;
+              // Draw a marker with orange border and green fill
+              return (
+                <g>
+                  {/* Orange square border */}
+                  <rect x={cx - 6} y={cy - 6} width={12} height={12} 
+                    stroke="#FF5733" 
+                    strokeWidth={2} 
+                    fill="#4CAF50" />
+                  {/* Value label above the point */}
+                  <text 
+                    x={cx} 
+                    y={cy - 15} 
+                    textAnchor="middle" 
+                    fill="#000" 
+                    fontSize={12}
+                  >
+                    {payload.score}
+                  </text>
+                </g>
+              );
+            }}
           />
         </LineChart>
       </ResponsiveContainer>
