@@ -8,20 +8,12 @@ export interface SurveyResponse {
   answers: any;
   submittedAt: Date;
 }
+
 export interface ResponseModel {
   id: string;
   data: any;
   createdAt: Date;
 }
+
 // Add more fields or types as needed for your application
-export interface ResponseModel {
-  id: string;
-  data: any;
-  createdAt: Date;
-}
-export interface ResponseModel {
-  id: string;
-  data: any;
-  createdAt: Date;
-}
 // ... existing code ...

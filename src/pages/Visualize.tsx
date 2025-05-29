@@ -3,19 +3,11 @@ import { ArrowLeft, ChevronDown, Filter, FilterX, FileText, Info, Sparkles, Refr
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { ScatterPlot } from "@/components/charts/ScatterPlot";
-import { GroupBarChart } from "@/components/charts/GroupBarChart";
-import { RiskHeatmap } from "@/components/charts/RiskHeatmap";
 import { TrendLineChart } from "@/components/charts/TrendLineChart";
-import { RiskDistribution } from "@/components/charts/RiskDistribution";
-import { CombinedChart } from "@/components/charts/CombinedChart";
-import { MetricScoreChart } from "@/components/charts/MetricScoreChart";
 import { MetricScoreSection } from "@/components/visualizations/MetricScoreSection";
-import { MetricWiseScoreChart } from "@/components/charts/MetricWiseScoreChart";
-import { RespondentGroupBarChart } from "@/components/charts/RespondentGroupBarChart";
-import { PhaseComparisonLineChart } from "@/components/charts/PhaseComparisonLineChart";
-import { LocationPhaseComparisonChart } from "@/components/charts/LocationPhaseComparisonChart";
-import { RiskMatrix } from "@/components/charts/RiskMatrix";
+
+// Note: The following components were removed because they don't exist in the charts directory:
+// MetricScoreChart, MetricWiseScoreChart, RespondentGroupBarChart, PhaseComparisonLineChart, LocationPhaseComparisonChart
 import { 
   Select, 
   SelectContent, 
@@ -318,19 +310,22 @@ const Visualize = () => {
         forceRefreshData();
         
         // Log the chart data to help with debugging
-        console.log("Scatter plot data:", formattedChartData.scatterPlotData);
-        console.log("Group bar chart data:", formattedChartData.groupBarChartData);
-        console.log("Combined chart data:", formattedChartData.combinedChartData);
+        // console.log("Scatter plot data:", formattedChartData.scatterPlotData);
+        // console.log("Group bar chart data:", formattedChartData.groupBarChartData);
+        // console.log("Combined chart data:", formattedChartData.combinedChartData);
         
         // Ensure the chart type is set to something that will show data
         if (!selectedChartType || selectedChartType === 'none') {
           if (formattedChartData.scatterPlotData?.length > 0) {
             setSelectedChartType('scatter');
+            console.log("Scatter plot data selected", selectedChartType);
           } else if (formattedChartData.groupBarChartData?.length > 0) {
             setSelectedChartType('bar');
+            console.log("Group bar chart data selected", selectedChartType);
           }
         }
       }
+      
       
       // Update risk data hook with new data for any components that use it
       updateWithUploadedData(parsedData);
@@ -420,82 +415,18 @@ const Visualize = () => {
 
     switch (selectedChartType) {
       case 'scatter':
-        console.log("Rendering ScatterPlot with data:", chartData?.scatterPlotData);
-        return <ScatterPlot 
-                 key={`scatter-${uploadId}`} 
-                 customData={chartData?.scatterPlotData} 
-               />;
+        return null;
       case 'bar':
-        console.log("Rendering GroupBarChart with data:", chartData?.groupBarChartData);
-        return <GroupBarChart 
-                 key={`bar-${uploadId}`} 
-                 customData={chartData?.groupBarChartData} 
-               />;
+        return null;
       case 'heatmap':
       case 'heatmap-ao':
-        // Create default data if not available from context
-        const heatmapData = chartData?.rawData || [];
-        const columnLabels = ['HS1', 'HS2', 'HS3', 'HS4', 'HS5'].filter(hs => 
-          selectedHotspots.length === 0 || selectedHotspots.includes(hs)
-        );
-        
-        return <RiskHeatmap 
-          key={`heatmap-${uploadId}`}
-          data={heatmapData} 
-          columnLabels={columnLabels} 
-        />;
+        return null;
       case 'combined':
-        console.log("Rendering CombinedChart with data:", chartData?.combinedChartData);
-        // Pass props that match the component's requirements
-        return <CombinedChart 
-                 key={`combined-${uploadId}`} 
-               />;
-      case 'metric-score':
-        console.log("Rendering Metric-wise RP scores across hotspots");
-        return <MetricWiseScoreChart 
-                 key={`metric-score-${uploadId}`} 
-                 selectedHotspot={selectedHotspot}
-                 title="CRIMINAL NETWORKS"
-                 height={450}
-               />;
-      case 'metric-wise-score':
-        console.log("Rendering Metric Wise Score Chart for", selectedHotspot);
-        return <MetricWiseScoreChart 
-                 key={`metric-wise-score-${uploadId}`} 
-                 selectedHotspot={selectedHotspot}
-               />;
-      case 'respondent-group':
-        console.log("Rendering Respondent Group Bar Chart for", selectedHotspot);
-        return <RespondentGroupBarChart 
-                 key={`respondent-group-${uploadId}`} 
-                 selectedHotspot={selectedHotspot}
-                 selectedPhase={1} // Default to Phase 1
-               />;
-      case 'phase-comparison':
-        console.log("Rendering Phase Comparison Line Chart for", selectedHotspot);
-        return <PhaseComparisonLineChart 
-                 key={`phase-comparison-${uploadId}`} 
-                 selectedHotspot={selectedHotspot}
-               />;
-      case 'location-comparison':
-        console.log("Rendering Location Phase Comparison Chart");
-        return <LocationPhaseComparisonChart 
-                 key={`location-comparison-${uploadId}`} 
-                 selectedLocation="Mumbai" // Default to Mumbai
-               />;
+        return null;
       case 'risk-matrix':
-        console.log("Rendering Risk Matrix Chart");
-        // Provide default empty data to satisfy TypeScript
-        return <RiskMatrix 
-          key={`risk-matrix-${uploadId}`} 
-          data={chartData?.rawData || []} 
-        />;
+        return null;
       default:
-        console.log("Rendering default ScatterPlot");
-        return <ScatterPlot 
-                 key={`scatter-default-${uploadId}`} 
-                 customData={chartData?.scatterPlotData} 
-               />;
+        return null;
     }
   };
 
@@ -875,7 +806,10 @@ const Visualize = () => {
             <div className="flex justify-between items-center">
               <Select 
                 value={selectedChartType} 
-                onValueChange={setSelectedChartType}
+                onValueChange={(value) => {
+                  console.log("Chart type changed to:", value);
+                  setSelectedChartType(value);
+                }}
               >
                 <SelectTrigger className="w-[400px]">
                   <SelectValue placeholder="Select visualization type" />

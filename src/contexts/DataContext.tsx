@@ -6,6 +6,7 @@ export interface ChartData {
   groupBarChartData?: any[];
   combinedChartData?: any[];
   scatterPlotData?: any[];
+  metricWiseScores?: any[];
   rawData?: any[];
   uniqueValues?: {
     AO?: string[];
@@ -336,12 +337,52 @@ const processRawData = (data: any[]): ChartData => {
     };
   };
 
+  // Function to generate metric-wise score data
+  const generateMetricWiseScores = () => {
+    // Get metrics from the data
+    const metrics = uniqueValues.Metric;
+    
+    // Define colors for metrics
+    const metricColors = [
+      '#4338ca', '#3b82f6', '#06b6d4', '#0ea5e9', 
+      '#0284c7', '#2563eb', '#1d4ed8', '#1e40af'
+    ];
+    
+    return metrics.map((metric, index) => {
+      // Get all data points for this metric
+      const metricData = data.filter(item => 
+        item['Metric'] === metric || 
+        item['Metric Name'] === metric || 
+        item['Risk Type'] === metric
+      );
+      
+      // Calculate average score for this metric
+      const avgScore = metricData.length > 0 ?
+        metricData.reduce((sum, item) => sum + parseFloat(
+          item['Risk Score'] || 
+          item['RP Score'] || 
+          item['Score'] || 
+          '0'
+        ), 0) / metricData.length : 0;
+      
+      return {
+        metric,
+        score: parseFloat(avgScore.toFixed(2)),
+        color: metricColors[index % metricColors.length],
+        // Include hotspot info if available
+        hotspot: metricData[0]?.['Hotspot'] || null
+      };
+    }).filter(item => !isNaN(item.score)); // Filter out NaN scores
+  };
+
   console.log("Processed scatter data:", generateScatterData().length, "groups");
+  console.log("Generated metric-wise scores:", uniqueValues.Metric.length, "metrics");
   
   return {
     groupBarChartData: groupBarData,
     combinedChartData: data && data.length > 0 ? generateCombinedData() : [],
     scatterPlotData: data && data.length > 0 ? generateScatterData() : [],
+    metricWiseScores: data && data.length > 0 ? generateMetricWiseScores() : [],
     rawData: data,
     uniqueValues,
     summaryStats: calculateSummaryStats()

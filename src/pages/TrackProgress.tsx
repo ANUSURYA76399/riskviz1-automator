@@ -4,67 +4,88 @@ import { Link, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Timeline } from "@/components/progress/Timeline";
-import { HotspotList } from "@/components/progress/HotspotList";
+import { HotspotList, Hotspot as HotspotListItem } from "@/components/progress/HotspotList";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
-const userRole = "analyst"; // Options: "analyst", "user", "admin"
+// Types
+type RespondentGroup = string;
+type HotspotStatus = "complete" | "partially-complete" | "incomplete";
 
-const locations = [
-  { 
-    name: "Mumbai", 
-    hotspots: [
-      { id: 1, name: "HOTSPOT 1", location: "Chembur", status: "complete", groups: "All respondent groups" },
-      { id: 2, name: "HOTSPOT 2", location: "Dharavi", status: "complete", groups: "All respondent groups" },
-      { id: 3, name: "HOTSPOT 3", location: "Andheri", status: "complete", groups: "All respondent groups" },
-      { id: 5, name: "HOTSPOT 5", location: "Bandra", status: "partially-complete", groups: "7/10 respondent groups", 
-        completedGroups: ["Criminal Networks", "Demand Center", "Transporters", "Customers", "Financial Networks", "Law Enforcement", "Community"],
-        pendingGroups: ["Digital Community", "Survivors", "Lawyers"] 
-      },
-    ]
-  },
-  { 
-    name: "Delhi", 
-    hotspots: [
-      { id: 2, name: "HOTSPOT 2", location: "Chandni Chowk", status: "complete", groups: "All respondent groups" },
-      { id: 3, name: "HOTSPOT 3", location: "Connaught Place", status: "partially-complete", groups: "8/10 respondent groups", 
-        completedGroups: ["Criminal Networks", "Demand Center", "Transporters", "Customers", "Financial Networks", "Law Enforcement", "Community", "Digital Community"],
-        pendingGroups: ["Survivors", "Lawyers"]
-      },
-      { id: 4, name: "HOTSPOT 4", location: "Dwarka", status: "incomplete", groups: "No data collected" },
-    ]
-  },
-  { 
-    name: "Chennai", 
-    hotspots: [
-      { id: 1, name: "HOTSPOT 1", location: "T Nagar", status: "partially-complete", groups: "5/10 respondent groups", 
-        completedGroups: ["Criminal Networks", "Demand Center", "Transporters", "Financial Networks", "Law Enforcement"],
-        pendingGroups: ["Customers", "Community", "Digital Community", "Survivors", "Lawyers"]
-      },
-      { id: 4, name: "HOTSPOT 4", location: "Anna Nagar", status: "incomplete", groups: "No data collected" },
-      { id: 6, name: "HOTSPOT 6", location: "Velachery", status: "incomplete", groups: "No data collected" },
-    ]
-  },
-  { 
-    name: "Kolkata", 
-    hotspots: [
-      { id: 2, name: "HOTSPOT 2", location: "Park Street", status: "complete", groups: "All respondent groups" },
-      { id: 3, name: "HOTSPOT 3", location: "Salt Lake", status: "partially-complete", groups: "6/10 respondent groups", 
-        completedGroups: ["Criminal Networks", "Demand Center", "Transporters", "Law Enforcement", "Community", "Digital Community"],
-        pendingGroups: ["Customers", "Financial Networks", "Survivors", "Lawyers"]
-      },
-    ]
-  },
+interface Hotspot {
+  id: string;
+  name: string;
+  location: string;
+  status: HotspotStatus;
+  groups: string;
+  completedGroups?: RespondentGroup[];
+  pendingGroups?: RespondentGroup[];
+}
+
+interface Location {
+  name: string;
+  hotspots: Hotspot[];
+}
+
+const userRole = "analyst"; // This would typically come from auth context
+
+const allRespondentGroups = [
+  "Criminal Networks",
+  "Demand Center",
+  "Transporters",
+  "Customers",
+  "Financial Networks",
+  "Law Enforcement",
+  "Community",
+  "Digital Community",
+  "Survivors",
+  "Lawyers"
 ];
 
 const TrackProgress = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [selectedCity, setSelectedCity] = useState("Mumbai");
+  const [locations, setLocations] = useState<Location[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [selectedCity, setSelectedCity] = useState<string>("");
   const [activePhase, setActivePhase] = useState(1);
-  const [activeTimePoint, setActiveTimePoint] = useState(null);
+  const [activeTimePoint, setActiveTimePoint] = useState<string | null>(null);
   const [updateDialogOpen, setUpdateDialogOpen] = useState(false);
+  const [selectedHotspot, setSelectedHotspot] = useState<Hotspot | null>(null);
+  const [selectedStatus, setSelectedStatus] = useState<HotspotStatus>("incomplete");
+  const [selectedGroups, setSelectedGroups] = useState<RespondentGroup[]>([]);
 
+  // Fetch locations data
+  useEffect(() => {
+    const fetchLocations = async () => {
+      setIsLoading(true);
+      try {
+        // Replace with actual API call
+        // const response = await fetch('/api/locations');
+        // const data = await response.json();
+        
+        // Simulating API call
+        await new Promise(resolve => setTimeout(resolve, 500));
+        // In a real app, you would use the data from the API response
+        const mockData: Location[] = []; // Empty array to start with
+        
+        setLocations(mockData);
+        if (mockData.length > 0) {
+          setSelectedCity(mockData[0].name);
+        }
+      } catch (err) {
+        setError("Failed to load location data");
+        console.error(err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchLocations();
+  }, []);
+
+  // Handle URL params
   useEffect(() => {
     const phaseParam = searchParams.get("phase");
     const monthsParam = searchParams.get("months");
@@ -77,53 +98,113 @@ const TrackProgress = () => {
     }
   }, [searchParams]);
 
-  const handlePhaseClick = (phase) => {
+  const handlePhaseClick = (phase: number) => {
     setActivePhase(phase);
     setActiveTimePoint(null);
-    searchParams.set("phase", phase.toString());
-    searchParams.delete("months");
-    setSearchParams(searchParams);
+    const newSearchParams = new URLSearchParams(searchParams);
+    newSearchParams.set("phase", phase.toString());
+    newSearchParams.delete("months");
+    setSearchParams(newSearchParams);
   };
 
-  const handleTimePointClick = (point) => {
+  const handleTimePointClick = (point: { phase: number; months: string }) => {
     setActivePhase(point.phase);
     setActiveTimePoint(point.months);
-    searchParams.set("phase", point.phase.toString());
-    searchParams.set("months", point.months.toString());
-    setSearchParams(searchParams);
+    const newSearchParams = new URLSearchParams(searchParams);
+    newSearchParams.set("phase", point.phase.toString());
+    newSearchParams.set("months", point.months.toString());
+    setSearchParams(newSearchParams);
   };
 
-  const selectedCityData = locations.find(loc => loc.name === selectedCity) || locations[0];
+  const selectedCityData = locations.find(loc => loc.name === selectedCity);
+  const shownHotspots = selectedCityData?.hotspots.filter(hotspot => {
+    // In a real app, you might filter by phase or other criteria
+    return true;
+  }) || [];
 
-  let shownHotspots = [];
-  if (activePhase === 1) {
-    shownHotspots = [
-      { id: 1, name: "HOTSPOT 1", location: "Chembur", status: "complete", groups: "All respondent groups" },
-      { id: 2, name: "HOTSPOT 2", location: "Dharavi", status: "complete", groups: "All respondent groups" },
-      { id: 3, name: "HOTSPOT 3", location: "Andheri", status: "complete", groups: "All respondent groups" },
-      { id: 5, name: "HOTSPOT 5", location: "Bandra", status: "partially-complete", groups: "7/10 respondent groups",
-        completedGroups: ["Criminal Networks", "Demand Center", "Transporters", "Customers", "Financial Networks", "Law Enforcement", "Community"],
-        pendingGroups: ["Digital Community", "Survivors", "Lawyers"] 
-      },
-    ];
-  } else if (activePhase === 2) {
-    shownHotspots = [
-      { id: 2, name: "HOTSPOT 2", location: "Chandni Chowk", status: "complete", groups: "All respondent groups" },
-      { id: 3, name: "HOTSPOT 3", location: "Connaught Place", status: "partially-complete", groups: "8/10 respondent groups",
-        completedGroups: ["Criminal Networks", "Demand Center", "Transporters", "Customers", "Financial Networks", "Law Enforcement", "Community", "Digital Community"],
-        pendingGroups: ["Survivors", "Lawyers"]
-      },
-      { id: 4, name: "HOTSPOT 4", location: "Dwarka", status: "incomplete", groups: "No data collected" },
-    ];
-  } else {
-    shownHotspots = [
-      { id: 1, name: "HOTSPOT 1", location: "T Nagar", status: "partially-complete", groups: "5/10 respondent groups",
-        completedGroups: ["Criminal Networks", "Demand Center", "Transporters", "Financial Networks", "Law Enforcement"],
-        pendingGroups: ["Customers", "Community", "Digital Community", "Survivors", "Lawyers"]
-      },
-      { id: 4, name: "HOTSPOT 4", location: "Anna Nagar", status: "incomplete", groups: "No data collected" },
-      { id: 6, name: "HOTSPOT 6", location: "Velachery", status: "incomplete", groups: "No data collected" },
-    ];
+  // Function to handle hotspot selection
+  const handleHotspotSelect = (hotspot: HotspotListItem) => {
+    // Convert back to our local Hotspot type if needed
+    const localHotspot: Hotspot = {
+      ...hotspot,
+      id: String(hotspot.id), // Convert number id back to string for our local type
+      location: hotspot.location || '',
+      groups: hotspot.groups
+    };
+    setSelectedHotspot(localHotspot);
+    setSelectedStatus(localHotspot.status);
+    setSelectedGroups(localHotspot.completedGroups || []);
+    setUpdateDialogOpen(true);
+  };
+
+  const handleGroupToggle = (group: RespondentGroup) => {
+    setSelectedGroups(prev => 
+      prev.includes(group) 
+        ? prev.filter(g => g !== group)
+        : [...prev, group]
+    );
+  };
+
+  const handleStatusUpdate = async () => {
+    if (!selectedHotspot) return;
+
+    try {
+      setIsLoading(true);
+      // Replace with actual API call
+      // await fetch(`/api/hotspots/${selectedHotspot.id}`, {
+      //   method: 'PUT',
+      //   body: JSON.stringify({
+      //     status: selectedStatus,
+      //     completedGroups: selectedGroups
+      //   })
+      // });
+
+      // Update local state optimistically
+      setLocations(prev => prev.map(location => ({
+        ...location,
+        hotspots: location.hotspots.map(hotspot => 
+          hotspot.id === selectedHotspot.id
+            ? {
+                ...hotspot,
+                status: selectedStatus,
+                completedGroups: selectedGroups,
+                pendingGroups: allRespondentGroups.filter(g => !selectedGroups.includes(g)),
+                groups: selectedStatus === "complete" 
+                  ? "All respondent groups"
+                  : selectedStatus === "partially-complete"
+                    ? `${selectedGroups.length}/${allRespondentGroups.length} respondent groups`
+                    : "No data collected"
+              }
+            : hotspot
+        )
+      })));
+
+      setUpdateDialogOpen(false);
+    } catch (err) {
+      setError("Failed to update hotspot status");
+      console.error(err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  if (isLoading && locations.length === 0) {
+    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+  }
+
+  if (error) {
+    return <div className="min-h-screen flex items-center justify-center text-red-500">{error}</div>;
+  }
+
+  if (locations.length === 0) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <p className="mb-4">No locations available</p>
+          <Button onClick={() => window.location.reload()}>Retry</Button>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -143,14 +224,17 @@ const TrackProgress = () => {
             <h2 className="text-xl font-semibold">Data Collection Progress Tracker</h2>
             <Select 
               value={selectedCity}
-              onValueChange={(value) => setSelectedCity(value)}
+              onValueChange={setSelectedCity}
+              disabled={isLoading}
             >
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="Select city" />
               </SelectTrigger>
               <SelectContent>
                 {locations.map(location => (
-                  <SelectItem key={location.name} value={location.name}>{location.name}</SelectItem>
+                  <SelectItem key={location.name} value={location.name}>
+                    {location.name}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -170,14 +254,16 @@ const TrackProgress = () => {
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <Button onClick={() => setUpdateDialogOpen(true)}>
+                        <Button 
+                          onClick={() => setUpdateDialogOpen(true)}
+                          disabled={isLoading || shownHotspots.length === 0}
+                        >
                           Update Collection Status
                         </Button>
                       </TooltipTrigger>
                       <TooltipContent>
                         <p className="max-w-xs text-sm">
-                          Update the collection status for each hotspot and respondent group. <br />
-                          <b>How it works:</b> Use the dropdown to mark individual respondent groups as complete or pending for each hotspot.
+                          Update the collection status for each hotspot and respondent group.
                         </p>
                       </TooltipContent>
                     </Tooltip>
@@ -186,23 +272,42 @@ const TrackProgress = () => {
               </div>
             </div>
 
-            <HotspotList hotspots={shownHotspots} />
+            {shownHotspots.length > 0 ? (
+              <>
+                <HotspotList 
+                  hotspots={shownHotspots.map(hotspot => ({
+                    ...hotspot,
+                    id: parseInt(hotspot.id) || 0, // Convert string id to number
+                    // Ensure other properties match the expected format
+                    status: hotspot.status as "complete" | "partially-complete" | "incomplete"
+                  }))} 
+                  onHotspotSelect={userRole === "analyst" ? 
+                    // Use an inline function to ensure type compatibility
+                    (hotspot: HotspotListItem) => handleHotspotSelect(hotspot) 
+                    : undefined
+                  }
+                />
 
-            <div className="mt-6 bg-blue-50 p-4 rounded-lg space-y-2">
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-green-500" />
-                <span className="text-sm">Complete - Data from all respondent groups collected</span>
+                <div className="mt-6 bg-blue-50 p-4 rounded-lg space-y-2">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full bg-green-500" />
+                    <span className="text-sm">Complete - Data from all respondent groups collected</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full bg-yellow-500" />
+                    <span className="text-sm">Partially Complete - Data from some respondent groups collected</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full bg-gray-400" />
+                    <span className="text-sm">Incomplete - No data collected</span>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div className="py-8 text-center text-gray-500">
+                No hotspots available for the selected city and phase
               </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-yellow-500" />
-                <span className="text-sm">Partially Complete - Data from 1-9 respondent groups collected</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-gray-400" />
-                <span className="text-sm">Incomplete - No data collected</span>
-              </div>
-              <p className="text-sm italic">Note: If any hotspot is incomplete, the entire AO is considered partially complete</p>
-            </div>
+            )}
           </div>
         </div>
       </div>
@@ -220,21 +325,35 @@ const TrackProgress = () => {
               <div className="grid gap-4">
                 <div>
                   <label className="block text-sm font-medium mb-1">Select Hotspot</label>
-                  <Select defaultValue="hotspot1">
+                  <Select 
+                    value={selectedHotspot?.id || ""}
+                    onValueChange={(value) => {
+                      const hotspot = shownHotspots.find(h => h.id === value);
+                      if (hotspot) {
+                        setSelectedHotspot(hotspot);
+                        setSelectedStatus(hotspot.status);
+                        setSelectedGroups(hotspot.completedGroups || []);
+                      }
+                    }}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Select Hotspot" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="hotspot1">HOTSPOT 1 - Chembur</SelectItem>
-                      <SelectItem value="hotspot2">HOTSPOT 2 - Dharavi</SelectItem>
-                      <SelectItem value="hotspot3">HOTSPOT 3 - Andheri</SelectItem>
-                      <SelectItem value="hotspot5">HOTSPOT 5 - Bandra</SelectItem>
+                      {shownHotspots.map(hotspot => (
+                        <SelectItem key={hotspot.id} value={hotspot.id}>
+                          {hotspot.name} - {hotspot.location}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-1">Status</label>
-                  <Select defaultValue="partially-complete">
+                  <Select 
+                    value={selectedStatus}
+                    onValueChange={(value: HotspotStatus) => setSelectedStatus(value)}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Select Status" />
                     </SelectTrigger>
@@ -249,14 +368,15 @@ const TrackProgress = () => {
                   <label className="block text-sm font-medium mb-1">Completed Respondent Groups</label>
                   <div className="max-h-40 overflow-y-auto border rounded-md p-2">
                     <div className="space-y-2">
-                      {["Criminal Networks", "Demand Center", "Transporters", "Customers", "Financial Networks", 
-                        "Law Enforcement", "Community", "Digital Community", "Survivors", "Lawyers"].map(group => (
+                      {allRespondentGroups.map(group => (
                         <div key={group} className="flex items-center space-x-2">
                           <input 
                             type="checkbox" 
-                            id={`group-${group}`} 
-                            className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" 
-                            defaultChecked={["Criminal Networks", "Demand Center", "Transporters", "Customers", "Financial Networks", "Law Enforcement", "Community"].includes(group)}
+                            id={`group-${group}`}
+                            checked={selectedGroups.includes(group)}
+                            onChange={() => handleGroupToggle(group)}
+                            className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                            disabled={selectedStatus === "incomplete"}
                           />
                           <label htmlFor={`group-${group}`} className="text-sm">{group}</label>
                         </div>
@@ -267,11 +387,18 @@ const TrackProgress = () => {
               </div>
             </div>
             <div className="flex justify-end gap-3">
-              <Button variant="outline" onClick={() => setUpdateDialogOpen(false)}>
+              <Button 
+                variant="outline" 
+                onClick={() => setUpdateDialogOpen(false)}
+                disabled={isLoading}
+              >
                 Cancel
               </Button>
-              <Button onClick={() => setUpdateDialogOpen(false)}>
-                Save Changes
+              <Button 
+                onClick={handleStatusUpdate}
+                disabled={isLoading || !selectedHotspot}
+              >
+                {isLoading ? "Saving..." : "Save Changes"}
               </Button>
             </div>
           </DialogContent>

@@ -7,7 +7,7 @@ import { RespondentGroupsDialog } from "./RespondentGroupsDialog";
 
 type HotspotStatus = "complete" | "partially-complete" | "incomplete";
 
-interface Hotspot {
+export interface Hotspot {
   id: number;
   name: string;
   location?: string;
@@ -19,6 +19,7 @@ interface Hotspot {
 
 interface HotspotListProps {
   hotspots: Hotspot[];
+  onHotspotSelect?: (hotspot: Hotspot) => void;
 }
 
 const getStatusColor = (status: HotspotStatus) => {
@@ -45,7 +46,7 @@ const getStatusIcon = (status: HotspotStatus) => {
   }
 };
 
-export const HotspotList = ({ hotspots }: HotspotListProps) => {
+export const HotspotList = ({ hotspots, onHotspotSelect }: HotspotListProps) => {
   const [dialogOpenHotspot, setDialogOpenHotspot] = useState<number | null>(null);
 
   return (

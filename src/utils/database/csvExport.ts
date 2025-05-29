@@ -1,30 +1,32 @@
-
 import { generateSampleData } from "./sampleData";
 import { calculateRiskScore, getRiskLevel } from "../riskCalculations";
 
 export interface CSVDataPoint {
   'Respondent Type'?: string;
-  'Respondent Group'?: string;
   'Hotspot'?: string;
-  'AO'?: string;
   'AO Location'?: string;
   'Phase'?: string | number;
-  'Risk Score'?: string | number;
   'RP Score'?: string | number;
   'Likelihood'?: string | number;
   'Severity'?: string | number;
   'Risk Level'?: string;
-  'Metric'?: string;
   'Metric Name'?: string;
   'Timeline'?: string;
+  // Add extra fields to support your Excel format
+  'Respondent Group'?: string;
+  'AO'?: string;
+  'Risk Score'?: string | number;
+  'Metric'?: string;
   [key: string]: string | number | undefined;
 }
 
 export const downloadSampleTemplate = () => {
   const sampleData = generateSampleData();
   const csvContent = [
+    // Match the exact column order from the Excel sample
     ["Respondent Type", "Hotspot", "AO Location", "Phase", "RP Score", "Likelihood", "Severity", "Risk Level", "Metric Name", "Timeline"],
     ...sampleData.map(data => {
+      // Calculate risk scores based on likelihood and severity
       const calculatedRiskScore = calculateRiskScore(Number(data.likelihood), Number(data.severity));
       const riskLevel = getRiskLevel(calculatedRiskScore);
       
@@ -70,15 +72,59 @@ export const parseUploadedCSV = async (file: File) => {
         console.log("CSV Headers:", headers);
         
         const data = rows.slice(1).map((row, index) => {
-          const values = row.split(',').map(v => v.trim());
-          const rowData: Record<string, string | number> = headers.reduce((obj, header, index) => {
-            // Ensure we have a value
-            obj[header] = values[index] || '';
+          // Handle CSV parsing more robustly to support Excel exports
+          // Split by comma but respect quotes (which may contain commas)
+          let values: string[] = [];
+          let currentValue = "";
+          let inQuotes = false;
+          
+          for (let i = 0; i < row.length; i++) {
+            const char = row[i];
+            
+            if (char === '"') {
+              inQuotes = !inQuotes;
+            } else if (char === ',' && !inQuotes) {
+              values.push(currentValue.trim());
+              currentValue = "";
+            } else {
+              currentValue += char;
+            }
+          }
+          
+          // Don't forget the last value
+          values.push(currentValue.trim());
+          
+          // Create object from headers and values
+          const rowData: Record<string, string | number> = headers.reduce((obj, header, idx) => {
+            // Ensure we have a value and use appropriate column names from your Excel
+            obj[header] = idx < values.length ? values[idx] : '';
             return obj;
           }, {} as Record<string, string | number>);
           
+          // Handle Phase conversion to ensure consistent data type
+          if (rowData['Phase'] !== undefined && rowData['Phase'] !== '') {
+            const phaseValue = parseFloat(String(rowData['Phase']));
+            if (!isNaN(phaseValue)) {
+              rowData['Phase'] = phaseValue;
+            }
+          }
+          
+          // Calculate or use provided RP Score
+          if (rowData['RP Score'] !== undefined && rowData['RP Score'] !== '') {
+            const rpScore = parseFloat(String(rowData['RP Score']));
+            if (!isNaN(rpScore)) {
+              rowData['RP Score'] = rpScore;
+              // If there's no Risk Score but we have RP Score, use it
+              if (!rowData['Risk Score']) {
+                rowData['Risk Score'] = rpScore;
+              }
+            }
+          }
+          
           // Calculate risk score based on likelihood and severity if needed
-          if (rowData['Likelihood'] && rowData['Severity'] && !rowData['Risk Score'] && !rowData['RP Score']) {
+          if (rowData['Likelihood'] && rowData['Severity'] && 
+              (!rowData['Risk Score'] || rowData['Risk Score'] === '') && 
+              (!rowData['RP Score'] || rowData['RP Score'] === '')) {
             // Convert string values to numbers
             const likelihood = parseFloat(String(rowData['Likelihood']));
             const severity = parseFloat(String(rowData['Severity']));
@@ -88,7 +134,16 @@ export const parseUploadedCSV = async (file: File) => {
               const riskLevel = getRiskLevel(riskScore);
               
               rowData['Risk Score'] = riskScore;
+              rowData['RP Score'] = riskScore; // Ensure both fields are populated
               rowData['Risk Level'] = riskLevel;
+            }
+          }
+          
+          // Ensure Risk Level is set if we have a Risk Score but no Risk Level
+          if ((rowData['Risk Score'] || rowData['RP Score']) && !rowData['Risk Level']) {
+            const score = parseFloat(String(rowData['Risk Score'] || rowData['RP Score']));
+            if (!isNaN(score)) {
+              rowData['Risk Level'] = getRiskLevel(score);
             }
           }
           
@@ -131,24 +186,24 @@ export const connectParsedDataToVisualizations = (parsedData: any[]) => {
     const uniqueValues = {
       AO: Array.from(new Set(parsedData.map(row => 
         row['AO Location'] || row['AO'] || row['Area'] || ''
-      ).filter(Boolean))),
+      ).filter(Boolean))).sort(),
       
       Hotspot: Array.from(new Set(parsedData.map(row => 
         row['Hotspot'] || ''
-      ).filter(Boolean))),
+      ).filter(Boolean))).sort(),
       
       RespondentGroup: Array.from(new Set(parsedData.map(row => 
         row['Respondent Type'] || row['Respondent Group'] || row['RespondentGroup'] || ''
-      ).filter(Boolean))),
+      ).filter(Boolean))).sort(),
       
       Metric: Array.from(new Set(parsedData.map(row => 
         row['Metric Name'] || row['Metric'] || row['Risk Type'] || ''
-      ).filter(Boolean))),
+      ).filter(Boolean))).sort(),
       
       Phase: Array.from(new Set(parsedData.map(row => {
         const phase = row['Phase'] || '';
         return phase !== '' ? Number(phase) : '';
-      }).filter(val => val !== ''))),
+      }).filter(val => val !== ''))).sort((a, b) => Number(a) - Number(b)),
       
       Timeline: Array.from(new Set(parsedData.map(row => 
         row['Timeline'] || row['Date'] || ''
@@ -179,12 +234,12 @@ export const connectParsedDataToVisualizations = (parsedData: any[]) => {
         if (!acc[type]) {
           acc[type] = { 
             name: type, 
-            phase1: 0, 
-            phase2: 0, 
-            phase3: 0, 
-            count1: 0, 
-            count2: 0, 
-            count3: 0 
+            phase1: 0,
+            phase2: 0,
+            phase3: 0,
+            count1: 0,
+            count2: 0,
+            count3: 0
           };
         }
         

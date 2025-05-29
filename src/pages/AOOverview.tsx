@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,73 +12,91 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LineChart, BarChart, Bar, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceLine } from 'recharts';
-import { riskScoresByPhase } from '@/data/risk';
 import { Brain, X, ArrowLeft, ChevronDown } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { DataTable } from "@/components/visualize/DataTable";
-import { RiskHeatmapTable } from '@/components/charts/RiskHeatmapTable';
+// import { RiskHeatmapTable } from '@/components/charts/RiskHeatmapTable'; // REMOVE THIS LINE
 import { generateRiskObservations, calculateStandardDeviation } from '@/utils/riskObservations';
 
-const extendedRespondentGroups = [
-  { name: 'Criminal Networks', phase1: 4.6, phase2: 5.7, phase3: 6.5, threshold: 3.0 },
-  { name: 'Demand Center', phase1: 5.2, phase2: 4.5, phase3: 6.3, threshold: 3.0 },
-  { name: 'Transporters', phase1: 6.4, phase2: 3.8, phase3: 6.7, threshold: 3.0 },
-  { name: 'Customers', phase1: 5.8, phase2: 5.2, phase3: 5.9, threshold: 3.0 },
-  { name: 'Financial Networks', phase1: 5.4, phase2: 6.1, phase3: 7.2, threshold: 3.0 },
-  { name: 'Law Enforcement', phase1: 6.1, phase2: 5.6, phase3: 5.8, threshold: 3.0 },
-  { name: 'Community', phase1: 6.5, phase2: 7.0, phase3: 6.7, threshold: 3.0 },
-  { name: 'Digital Community', phase1: 5.0, phase2: 5.9, phase3: 5.4, threshold: 3.0 },
-  { name: 'Survivors', phase1: 5.7, phase2: 5.2, phase3: 5.3, threshold: 3.0 },
-  { name: 'Lawyers', phase1: 4.9, phase2: 5.4, phase3: 6.0, threshold: 3.0 }
-];
+interface RespondentGroupData {
+  name: string;
+  phase1: number;
+  phase2: number;
+  phase3: number;
+  threshold?: number;
+}
 
-const riskScoresByHotspot = [
-  { hotspot: 'HS1', phase1: 5.5, phase2: 6.2, phase3: 6.8, threshold: 3.0 },
-  { hotspot: 'HS2', phase1: 4.8, phase2: 5.5, phase3: 6.3, threshold: 3.0 },
-  { hotspot: 'HS3', phase1: 5.2, phase2: 5.8, phase3: 6.5, threshold: 3.0 }
-];
+interface HotspotData {
+  hotspot: string;
+  phase1: number;
+  phase2: number;
+  phase3: number;
+  threshold?: number;
+}
 
-const combinedRPDisruption = [
-  { hotspot: 'HS1', rpScore: 5.8, disruption: 48 },
-  { hotspot: 'HS2', rpScore: 6.3, disruption: 52 },
-  { hotspot: 'HS3', rpScore: 6.5, disruption: 56 }
-];
+interface CombinedRPDisruptionData {
+  hotspot: string;
+  rpScore: number;
+  disruption: number;
+}
 
-const hotspotDetailsTable = [
-  { id: 'hs1', name: 'HS1', phase1: 5.5, phase2: 6.2, phase3: 6.8, change: -1.3 },
-  { id: 'hs2', name: 'HS2', phase1: 4.8, phase2: 5.5, phase3: 6.3, change: -1.5 },
-  { id: 'hs3', name: 'HS3', phase1: 5.2, phase2: 5.8, phase3: 6.5, change: -1.3 }
-];
+interface HotspotDetails {
+  id: string;
+  name: string;
+  phase1: number;
+  phase2: number;
+  phase3: number;
+  change?: number;
+}
 
-const locations = ['Mumbai', 'Delhi', 'Chennai', 'Kolkata'];
-const phases = ['1', '2', '3'];
-const hotspots = ['HS1', 'HS2', 'HS3'];
-const respondentGroups = [
-  'Criminal Networks', 
-  'Demand Center', 
-  'Transporters', 
-  'Customers', 
-  'Financial Networks', 
-  'Law Enforcement', 
-  'Community', 
-  'Digital Community', 
-  'Survivors',
-  'Lawyers'
-];
-const timelines = ['3 months', '6 months', '9 months', '12 months'];
+interface AOOverviewProps {
+  locations?: string[];
+  phases?: string[];
+  hotspots?: string[];
+  respondentGroups?: string[];
+  timelines?: string[];
+  respondentData?: RespondentGroupData[];
+  hotspotData?: HotspotData[];
+  combinedData?: CombinedRPDisruptionData[];
+  hotspotDetails?: HotspotDetails[];
+  defaultLocation?: string;
+  defaultPhases?: string[];
+  defaultHotspots?: string[];
+  defaultRespondentGroups?: string[];
+  defaultTimeline?: string;
+  thresholdValue?: number;
+}
 
-const interpretRPScore = (score) => {
+const interpretRPScore = (score: number) => {
   if (score >= 6) return "High Risk Perception";
   if (score >= 3) return "Medium Risk Perception";
   return "Low Risk Perception";
 };
 
-const AOOverview = () => {
-  const [selectedLocation, setSelectedLocation] = useState('Mumbai');
-  const [selectedPhases, setSelectedPhases] = useState<string[]>(['1', '2', '3']);
-  const [selectedHotspots, setSelectedHotspots] = useState<string[]>(['HS1', 'HS2', 'HS3']);
-  const [selectedRespondentGroups, setSelectedRespondentGroups] = useState<string[]>(respondentGroups);
-  const [selectedTimeline, setSelectedTimeline] = useState('3 months');
+const AOOverview = ({
+  locations = ['Location 1', 'Location 2', 'Location 3'],
+  phases = ['1', '2', '3'],
+  hotspots = ['HS1', 'HS2', 'HS3'],
+  respondentGroups = ['Group 1', 'Group 2', 'Group 3'],
+  timelines = ['3 months', '6 months', '9 months', '12 months'],
+  respondentData = [],
+  hotspotData = [],
+  combinedData = [],
+  hotspotDetails = [],
+  defaultLocation = '',
+  defaultPhases = ['1', '2', '3'],
+  defaultHotspots = [],
+  defaultRespondentGroups = [],
+  defaultTimeline = '3 months',
+  thresholdValue = 3
+}: AOOverviewProps) => {
+  const [selectedLocation, setSelectedLocation] = useState(defaultLocation || locations[0]);
+  const [selectedPhases, setSelectedPhases] = useState<string[]>(defaultPhases.length ? defaultPhases : phases);
+  const [selectedHotspots, setSelectedHotspots] = useState<string[]>(defaultHotspots.length ? defaultHotspots : hotspots);
+  const [selectedRespondentGroups, setSelectedRespondentGroups] = useState<string[]>(
+    defaultRespondentGroups.length ? defaultRespondentGroups : respondentGroups
+  );
+  const [selectedTimeline, setSelectedTimeline] = useState(defaultTimeline);
   const [showThresholdLine, setShowThresholdLine] = useState(true);
   const [showDataTable, setShowDataTable] = useState(false);
   const [activeTab, setActiveTab] = useState('rp-respondent');
@@ -99,7 +116,7 @@ const AOOverview = () => {
   };
 
   const prepareChartData = () => {
-    const filteredGroups = extendedRespondentGroups.filter(group => 
+    const filteredGroups = respondentData.filter(group => 
       selectedRespondentGroups.includes(group.name)
     );
     
@@ -123,7 +140,7 @@ const AOOverview = () => {
   };
 
   const prepareHotspotData = () => {
-    const filteredHotspots = riskScoresByHotspot.filter(hs => 
+    const filteredHotspots = hotspotData.filter(hs => 
       selectedHotspots.includes(hs.hotspot)
     );
     
@@ -147,13 +164,15 @@ const AOOverview = () => {
   };
 
   const prepareCombinedData = () => {
-    return combinedRPDisruption.filter(item => 
+    return combinedData.filter(item => 
       selectedHotspots.includes(item.hotspot)
     );
   };
 
   const generateKeyObservations = () => {
-    const allScores = extendedRespondentGroups.flatMap(group => [
+    if (respondentData.length === 0) return [];
+    
+    const allScores = respondentData.flatMap(group => [
       group.phase1,
       group.phase2,
       group.phase3
@@ -162,7 +181,7 @@ const AOOverview = () => {
     const overallAverage = allScores.reduce((sum, score) => sum + score, 0) / allScores.length;
     const stdDev = calculateStandardDeviation(allScores);
     
-    const observations = extendedRespondentGroups.flatMap(group => {
+    const observations = respondentData.flatMap(group => {
       return generateRiskObservations(
         group.phase3,
         group.phase2,
@@ -216,7 +235,7 @@ const AOOverview = () => {
   };
 
   const prepareTableData = () => {
-    const filteredHotspots = hotspotDetailsTable.filter(hs => 
+    const filteredHotspots = hotspotDetails.filter(hs => 
       selectedHotspots.includes(hs.name)
     );
     
@@ -238,299 +257,329 @@ const AOOverview = () => {
     });
   };
 
-  const renderRespondentChart = () => (
-    <div className="h-[450px] relative" id="chart-container">
-      <ResponsiveContainer width="100%" height="100%">
-        <LineChart
-          data={prepareChartData()}
-          margin={{ top: 20, right: 30, left: 20, bottom: 10 }}
-          onClick={handleChartClick}
-        >
-          <CartesianGrid strokeDasharray="3 3" />
-          <XAxis 
-            dataKey="name" 
-            label={{ value: 'Respondent Groups', position: 'insideBottom', offset: -15 }}
-          />
-          <YAxis 
-            domain={[0, 9]}
-            label={{ value: 'Mean RP scores', angle: -90, position: 'insideLeft' }}
-            ticks={[0, 1, 2, 3, 4, 5, 6, 7, 8, 9]}
-          />
-          <Tooltip 
-            formatter={(value: any) => [`${value}`, 'RP Score']}
-            labelFormatter={(label) => `${label}`}
-          />
-          <Legend />
-          
-          {showThresholdLine && (
-            <ReferenceLine 
-              y={3} 
-              stroke="#f59e0b" 
-              strokeDasharray="3 3" 
-              strokeWidth={2}
-              label={{ 
-                value: 'Threshold (3)', 
-                position: 'right',
-                fill: '#f59e0b',
-                fontSize: 12
-              }} 
-            />
-          )}
-          
-          {selectedPhases.includes('1') && (
-            <Line
-              type="monotone"
-              dataKey="Phase 1 (T1)"
-              name="Phase 1 (T1)"
-              stroke="#3b82f6"
-              activeDot={{ r: 6, onClick: (e: any) => handleDataPointClick(e.payload, "Phase 1 (T1)") }}
-              strokeWidth={2}
-            />
-          )}
-          
-          {selectedPhases.includes('2') && (
-            <Line
-              type="monotone"
-              dataKey="Phase 2 (T2)"
-              name="Phase 2 (T2)"
-              stroke="#ef4444"
-              activeDot={{ r: 6, onClick: (e: any) => handleDataPointClick(e.payload, "Phase 2 (T2)") }}
-              strokeWidth={2}
-            />
-          )}
-          
-          {selectedPhases.includes('3') && (
-            <Line
-              type="monotone"
-              dataKey="Phase 3 (T3)"
-              name="Phase 3 (T3)"
-              stroke="#22c55e"
-              activeDot={{ r: 6, onClick: (e: any) => handleDataPointClick(e.payload, "Phase 3 (T3)") }}
-              strokeWidth={2}
-            />
-          )}
-        </LineChart>
-      </ResponsiveContainer>
-
-      {popupInfo && (
-        <div className="absolute left-1/4 top-1/3 bg-pink-500 text-white p-3 rounded-md shadow-lg max-w-xs z-10">
-          <p className="font-bold">{popupInfo.group} - Phase {popupInfo.phase}</p>
-          <p>RP Score: {popupInfo.value.toFixed(1)}</p>
-          <p>{popupInfo.interpretation}</p>
-          <button 
-            onClick={() => setPopupInfo(null)} 
-            className="absolute top-1 right-1 text-white hover:text-gray-200"
-          >
-            <X size={14} />
-          </button>
-        </div>
-      )}
-
-      {comparePopupInfo && (
-        <div className="absolute right-1/4 bottom-1/3 bg-blue-500 text-white p-3 rounded-md shadow-lg max-w-xs z-10">
-          <p className="font-bold">{comparePopupInfo.group} - Phase {comparePopupInfo.phase}</p>
-          <p>RP Score: {comparePopupInfo.value.toFixed(1)}</p>
-          <p>{comparePopupInfo.interpretation}</p>
-          <button 
-            onClick={() => setComparePopupInfo(null)} 
-            className="absolute top-1 right-1 text-white hover:text-gray-200"
-          >
-            <X size={14} />
-          </button>
-        </div>
-      )}
-    </div>
-  );
+  const renderRespondentChart = () => {
+    const chartData = prepareChartData();
     
-  const renderHotspotChart = () => (
-    <div className="h-[450px] relative">
-      <ResponsiveContainer width="100%" height="100%">
-        <LineChart
-          data={prepareHotspotData()}
-          margin={{ top: 20, right: 30, left: 20, bottom: 10 }}
-          onClick={handleChartClick}
-        >
-          <CartesianGrid strokeDasharray="3 3" />
-          <XAxis 
-            dataKey="name" 
-            label={{ value: 'Hotspots', position: 'insideBottom', offset: -15 }}
-          />
-          <YAxis 
-            domain={[0, 9]}
-            label={{ value: 'Mean RP scores', angle: -90, position: 'insideLeft' }}
-            ticks={[0, 1, 2, 3, 4, 5, 6, 7, 8, 9]}
-          />
-          <Tooltip 
-            formatter={(value: any) => [`${value}`, 'RP Score']}
-            labelFormatter={(label) => `${label}`}
-          />
-          <Legend />
-          
-          {showThresholdLine && (
-            <ReferenceLine 
-              y={3} 
-              stroke="#f59e0b" 
-              strokeDasharray="3 3" 
-              strokeWidth={2}
-              label={{ 
-                value: 'Threshold (3)', 
-                position: 'right',
-                fill: '#f59e0b',
-                fontSize: 12
-              }} 
-            />
-          )}
-          
-          {selectedPhases.includes('1') && (
-            <Line
-              type="monotone"
-              dataKey="Phase 1 (T1)"
-              name="Phase 1 (T1)"
-              stroke="#3b82f6"
-              activeDot={{ r: 6, onClick: (e: any) => handleDataPointClick(e.payload, "Phase 1 (T1)") }}
-              strokeWidth={2}
-            />
-          )}
-          
-          {selectedPhases.includes('2') && (
-            <Line
-              type="monotone"
-              dataKey="Phase 2 (T2)"
-              name="Phase 2 (T2)"
-              stroke="#ef4444"
-              activeDot={{ r: 6, onClick: (e: any) => handleDataPointClick(e.payload, "Phase 2 (T2)") }}
-              strokeWidth={2}
-            />
-          )}
-          
-          {selectedPhases.includes('3') && (
-            <Line
-              type="monotone"
-              dataKey="Phase 3 (T3)"
-              name="Phase 3 (T3)"
-              stroke="#22c55e"
-              activeDot={{ r: 6, onClick: (e: any) => handleDataPointClick(e.payload, "Phase 3 (T3)") }}
-              strokeWidth={2}
-            />
-          )}
-        </LineChart>
-      </ResponsiveContainer>
-      
-      {popupInfo && (
-        <div className="absolute left-1/4 top-1/3 bg-pink-500 text-white p-3 rounded-md shadow-lg max-w-xs z-10">
-          <p className="font-bold">{popupInfo.group} - Phase {popupInfo.phase}</p>
-          <p>RP Score: {popupInfo.value.toFixed(1)}</p>
-          <button 
-            onClick={() => setPopupInfo(null)} 
-            className="absolute top-1 right-1 text-white hover:text-gray-200"
-          >
-            <X size={14} />
-          </button>
-        </div>
-      )}
-      
-      {comparePopupInfo && (
-        <div className="absolute right-1/4 bottom-1/3 bg-blue-500 text-white p-3 rounded-md shadow-lg max-w-xs z-10">
-          <p className="font-bold">{comparePopupInfo.group} - Phase {comparePopupInfo.phase}</p>
-          <p>RP Score: {comparePopupInfo.value.toFixed(1)}</p>
-          <button 
-            onClick={() => setComparePopupInfo(null)} 
-            className="absolute top-1 right-1 text-white hover:text-gray-200"
-          >
-            <X size={14} />
-          </button>
-        </div>
-      )}
-    </div>
-  );
+    return (
+      <div className="h-[450px] relative" id="chart-container">
+        {chartData.length === 0 ? (
+          <div className="flex items-center justify-center h-full">
+            <p className="text-gray-500">No respondent data available</p>
+          </div>
+        ) : (
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart
+              data={chartData}
+              margin={{ top: 20, right: 30, left: 20, bottom: 10 }}
+              onClick={handleChartClick}
+            >
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis 
+                dataKey="name" 
+                label={{ value: 'Respondent Groups', position: 'insideBottom', offset: -15 }}
+              />
+              <YAxis 
+                domain={[0, 9]}
+                label={{ value: 'Mean RP scores', angle: -90, position: 'insideLeft' }}
+                ticks={[0, 1, 2, 3, 4, 5, 6, 7, 8, 9]}
+              />
+              <Tooltip 
+                formatter={(value: any) => [`${value}`, 'RP Score']}
+                labelFormatter={(label) => `${label}`}
+              />
+              <Legend />
+              
+              {showThresholdLine && (
+                <ReferenceLine 
+                  y={thresholdValue} 
+                  stroke="#f59e0b" 
+                  strokeDasharray="3 3" 
+                  strokeWidth={2}
+                  label={{ 
+                    value: `Threshold (${thresholdValue})`, 
+                    position: 'right',
+                    fill: '#f59e0b',
+                    fontSize: 12
+                  }} 
+                />
+              )}
+              
+              {selectedPhases.includes('1') && (
+                <Line
+                  type="monotone"
+                  dataKey="Phase 1 (T1)"
+                  name="Phase 1 (T1)"
+                  stroke="#3b82f6"
+                  activeDot={{ r: 6, onClick: (e: any) => handleDataPointClick(e.payload, "Phase 1 (T1)") }}
+                  strokeWidth={2}
+                />
+              )}
+              
+              {selectedPhases.includes('2') && (
+                <Line
+                  type="monotone"
+                  dataKey="Phase 2 (T2)"
+                  name="Phase 2 (T2)"
+                  stroke="#ef4444"
+                  activeDot={{ r: 6, onClick: (e: any) => handleDataPointClick(e.payload, "Phase 2 (T2)") }}
+                  strokeWidth={2}
+                />
+              )}
+              
+              {selectedPhases.includes('3') && (
+                <Line
+                  type="monotone"
+                  dataKey="Phase 3 (T3)"
+                  name="Phase 3 (T3)"
+                  stroke="#22c55e"
+                  activeDot={{ r: 6, onClick: (e: any) => handleDataPointClick(e.payload, "Phase 3 (T3)") }}
+                  strokeWidth={2}
+                />
+              )}
+            </LineChart>
+          </ResponsiveContainer>
+        )}
+
+        {popupInfo && (
+          <div className="absolute left-1/4 top-1/3 bg-pink-500 text-white p-3 rounded-md shadow-lg max-w-xs z-10">
+            <p className="font-bold">{popupInfo.group} - Phase {popupInfo.phase}</p>
+            <p>RP Score: {popupInfo.value.toFixed(1)}</p>
+            <p>{popupInfo.interpretation}</p>
+            <button 
+              onClick={() => setPopupInfo(null)} 
+              className="absolute top-1 right-1 text-white hover:text-gray-200"
+            >
+              <X size={14} />
+            </button>
+          </div>
+        )}
+
+        {comparePopupInfo && (
+          <div className="absolute right-1/4 bottom-1/3 bg-blue-500 text-white p-3 rounded-md shadow-lg max-w-xs z-10">
+            <p className="font-bold">{comparePopupInfo.group} - Phase {comparePopupInfo.phase}</p>
+            <p>RP Score: {comparePopupInfo.value.toFixed(1)}</p>
+            <p>{comparePopupInfo.interpretation}</p>
+            <button 
+              onClick={() => setComparePopupInfo(null)} 
+              className="absolute top-1 right-1 text-white hover:text-gray-200"
+            >
+              <X size={14} />
+            </button>
+          </div>
+        )}
+      </div>
+    );
+  };
     
-  const renderDisruptionChart = () => (
-    <div className="h-[450px] relative">
-      <ResponsiveContainer width="100%" height="100%">
-        <BarChart
-          data={prepareCombinedData()}
-          margin={{ top: 20, right: 30, left: 20, bottom: 10 }}
-          onClick={handleChartClick}
-        >
-          <CartesianGrid strokeDasharray="3 3" />
-          <XAxis
-            dataKey="hotspot"
-            label={{ value: 'Hotspots', position: 'insideBottom', offset: -15 }}
-          />
-          <YAxis 
-            yAxisId="left"
-            label={{ value: 'RP Score', angle: -90, position: 'insideLeft' }}
-            domain={[0, 9]}
-            ticks={[0, 1, 2, 3, 4, 5, 6, 7, 8, 9]}
-          />
-          <YAxis 
-            yAxisId="right"
-            orientation="right"
-            label={{ value: 'Disruption %', angle: 90, position: 'insideRight' }}
-            domain={[0, 100]}
-          />
-          <Tooltip />
-          <Legend />
-          <Bar 
-            yAxisId="left" 
-            dataKey="rpScore" 
-            name="RP Score" 
-            fill="#8884d8"
-            onClick={(data) => handleDataPointClick(data, "rpScore")}
-          />
-          <Bar 
-            yAxisId="right" 
-            dataKey="disruption" 
-            name="Disruption %" 
-            fill="#82ca9d" 
-            onClick={(data) => handleComparePoint(data, "disruption")}
-          />
-          
-          {showThresholdLine && (
-            <ReferenceLine 
-              y={3} 
-              yAxisId="left"
-              stroke="#f59e0b" 
-              strokeDasharray="3 3" 
-              strokeWidth={2}
-              label={{ 
-                value: 'Threshold (3)', 
-                position: 'right',
-                fill: '#f59e0b',
-                fontSize: 12
-              }} 
-            />
-          )}
-        </BarChart>
-      </ResponsiveContainer>
-      
-      {popupInfo && (
-        <div className="absolute left-1/4 top-1/3 bg-pink-500 text-white p-3 rounded-md shadow-lg max-w-xs z-10">
-          <p className="font-bold">{popupInfo.group}</p>
-          <p>RP Score: {popupInfo.value.toFixed(1)}</p>
-          <button 
-            onClick={() => setPopupInfo(null)} 
-            className="absolute top-1 right-1 text-white hover:text-gray-200"
-          >
-            <X size={14} />
-          </button>
-        </div>
-      )}
-      
-      {comparePopupInfo && (
-        <div className="absolute right-1/4 bottom-1/3 bg-blue-500 text-white p-3 rounded-md shadow-lg max-w-xs z-10">
-          <p className="font-bold">{comparePopupInfo.group}</p>
-          <p>Disruption: {comparePopupInfo.value}%</p>
-          <button 
-            onClick={() => setComparePopupInfo(null)} 
-            className="absolute top-1 right-1 text-white hover:text-gray-200"
-          >
-            <X size={14} />
-          </button>
-        </div>
-      )}
-    </div>
-  );
+  const renderHotspotChart = () => {
+    const chartData = prepareHotspotData();
+    
+    return (
+      <div className="h-[450px] relative">
+        {chartData.length === 0 ? (
+          <div className="flex items-center justify-center h-full">
+            <p className="text-gray-500">No hotspot data available</p>
+          </div>
+        ) : (
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart
+              data={chartData}
+              margin={{ top: 20, right: 30, left: 20, bottom: 10 }}
+              onClick={handleChartClick}
+            >
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis 
+                dataKey="name" 
+                label={{ value: 'Hotspots', position: 'insideBottom', offset: -15 }}
+              />
+              <YAxis 
+                domain={[0, 9]}
+                label={{ value: 'Mean RP scores', angle: -90, position: 'insideLeft' }}
+                ticks={[0, 1, 2, 3, 4, 5, 6, 7, 8, 9]}
+              />
+              <Tooltip 
+                formatter={(value: any) => [`${value}`, 'RP Score']}
+                labelFormatter={(label) => `${label}`}
+              />
+              <Legend />
+              
+              {showThresholdLine && (
+                <ReferenceLine 
+                  y={thresholdValue} 
+                  stroke="#f59e0b" 
+                  strokeDasharray="3 3" 
+                  strokeWidth={2}
+                  label={{ 
+                    value: `Threshold (${thresholdValue})`, 
+                    position: 'right',
+                    fill: '#f59e0b',
+                    fontSize: 12
+                  }} 
+                />
+              )}
+              
+              {selectedPhases.includes('1') && (
+                <Line
+                  type="monotone"
+                  dataKey="Phase 1 (T1)"
+                  name="Phase 1 (T1)"
+                  stroke="#3b82f6"
+                  activeDot={{ r: 6, onClick: (e: any) => handleDataPointClick(e.payload, "Phase 1 (T1)") }}
+                  strokeWidth={2}
+                />
+              )}
+              
+              {selectedPhases.includes('2') && (
+                <Line
+                  type="monotone"
+                  dataKey="Phase 2 (T2)"
+                  name="Phase 2 (T2)"
+                  stroke="#ef4444"
+                  activeDot={{ r: 6, onClick: (e: any) => handleDataPointClick(e.payload, "Phase 2 (T2)") }}
+                  strokeWidth={2}
+                />
+              )}
+              
+              {selectedPhases.includes('3') && (
+                <Line
+                  type="monotone"
+                  dataKey="Phase 3 (T3)"
+                  name="Phase 3 (T3)"
+                  stroke="#22c55e"
+                  activeDot={{ r: 6, onClick: (e: any) => handleDataPointClick(e.payload, "Phase 3 (T3)") }}
+                  strokeWidth={2}
+                />
+              )}
+            </LineChart>
+          </ResponsiveContainer>
+        )}
+        
+        {popupInfo && (
+          <div className="absolute left-1/4 top-1/3 bg-pink-500 text-white p-3 rounded-md shadow-lg max-w-xs z-10">
+            <p className="font-bold">{popupInfo.group} - Phase {popupInfo.phase}</p>
+            <p>RP Score: {popupInfo.value.toFixed(1)}</p>
+            <button 
+              onClick={() => setPopupInfo(null)} 
+              className="absolute top-1 right-1 text-white hover:text-gray-200"
+            >
+              <X size={14} />
+            </button>
+          </div>
+        )}
+        
+        {comparePopupInfo && (
+          <div className="absolute right-1/4 bottom-1/3 bg-blue-500 text-white p-3 rounded-md shadow-lg max-w-xs z-10">
+            <p className="font-bold">{comparePopupInfo.group} - Phase {comparePopupInfo.phase}</p>
+            <p>RP Score: {comparePopupInfo.value.toFixed(1)}</p>
+            <button 
+              onClick={() => setComparePopupInfo(null)} 
+              className="absolute top-1 right-1 text-white hover:text-gray-200"
+            >
+              <X size={14} />
+            </button>
+          </div>
+        )}
+      </div>
+    );
+  };
+    
+  const renderDisruptionChart = () => {
+    const chartData = prepareCombinedData();
+    
+    return (
+      <div className="h-[450px] relative">
+        {chartData.length === 0 ? (
+          <div className="flex items-center justify-center h-full">
+            <p className="text-gray-500">No combined data available</p>
+          </div>
+        ) : (
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart
+              data={chartData}
+              margin={{ top: 20, right: 30, left: 20, bottom: 10 }}
+              onClick={handleChartClick}
+            >
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis
+                dataKey="hotspot"
+                label={{ value: 'Hotspots', position: 'insideBottom', offset: -15 }}
+              />
+              <YAxis 
+                yAxisId="left"
+                label={{ value: 'RP Score', angle: -90, position: 'insideLeft' }}
+                domain={[0, 9]}
+                ticks={[0, 1, 2, 3, 4, 5, 6, 7, 8, 9]}
+              />
+              <YAxis 
+                yAxisId="right"
+                orientation="right"
+                label={{ value: 'Disruption %', angle: 90, position: 'insideRight' }}
+                domain={[0, 100]}
+              />
+              <Tooltip />
+              <Legend />
+              <Bar 
+                yAxisId="left" 
+                dataKey="rpScore" 
+                name="RP Score" 
+                fill="#8884d8"
+                onClick={(data) => handleDataPointClick(data, "rpScore")}
+              />
+              <Bar 
+                yAxisId="right" 
+                dataKey="disruption" 
+                name="Disruption %" 
+                fill="#82ca9d" 
+                onClick={(data) => handleComparePoint(data, "disruption")}
+              />
+              
+              {showThresholdLine && (
+                <ReferenceLine 
+                  y={thresholdValue} 
+                  yAxisId="left"
+                  stroke="#f59e0b" 
+                  strokeDasharray="3 3" 
+                  strokeWidth={2}
+                  label={{ 
+                    value: `Threshold (${thresholdValue})`, 
+                    position: 'right',
+                    fill: '#f59e0b',
+                    fontSize: 12
+                  }} 
+                />
+              )}
+            </BarChart>
+          </ResponsiveContainer>
+        )}
+        
+        {popupInfo && (
+          <div className="absolute left-1/4 top-1/3 bg-pink-500 text-white p-3 rounded-md shadow-lg max-w-xs z-10">
+            <p className="font-bold">{popupInfo.group}</p>
+            <p>RP Score: {popupInfo.value.toFixed(1)}</p>
+            <button 
+              onClick={() => setPopupInfo(null)} 
+              className="absolute top-1 right-1 text-white hover:text-gray-200"
+            >
+              <X size={14} />
+            </button>
+          </div>
+        )}
+        
+        {comparePopupInfo && (
+          <div className="absolute right-1/4 bottom-1/3 bg-blue-500 text-white p-3 rounded-md shadow-lg max-w-xs z-10">
+            <p className="font-bold">{comparePopupInfo.group}</p>
+            <p>Disruption: {comparePopupInfo.value}%</p>
+            <button 
+              onClick={() => setComparePopupInfo(null)} 
+              className="absolute top-1 right-1 text-white hover:text-gray-200"
+            >
+              <X size={14} />
+            </button>
+          </div>
+        )}
+      </div>
+    );
+  };
 
   const renderChart = () => {
     switch (activeTab) {
@@ -541,7 +590,17 @@ const AOOverview = () => {
       case 'rp-disruption':
         return renderDisruptionChart();
       case 'rp-heatmap':
-        return <RiskHeatmapTable />;
+        // Transform hotspotDetails to match the HeatmapRow structure
+        const heatmapData = hotspotDetails.map(detail => ({
+          hotspot: detail.name,
+          cells: {
+            'Phase 1': detail.phase1,
+            'Phase 2': detail.phase2,
+            'Phase 3': detail.phase3
+          }
+        }));
+        // REMOVE: return <RiskHeatmapTable data={heatmapData} />;
+        return null;
       default:
         return null;
     }
@@ -782,19 +841,23 @@ const AOOverview = () => {
 
             <div className="mt-8">
               <h3 className="text-lg font-medium mb-2">Key Observations</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {keyObservations.map((observation, index) => (
-                  <div 
-                    key={index}
-                    className="bg-white border rounded-md p-3 flex items-start gap-3"
-                  >
-                    <div className="bg-purple-100 h-6 w-6 rounded-full flex items-center justify-center shrink-0">
-                      <Brain className="h-4 w-4 text-purple-600" />
+              {keyObservations.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {keyObservations.map((observation, index) => (
+                    <div 
+                      key={index}
+                      className="bg-white border rounded-md p-3 flex items-start gap-3"
+                    >
+                      <div className="bg-purple-100 h-6 w-6 rounded-full flex items-center justify-center shrink-0">
+                        <Brain className="h-4 w-4 text-purple-600" />
+                      </div>
+                      <p className="text-sm">{observation}</p>
                     </div>
-                    <p className="text-sm">{observation}</p>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-gray-500">No observations available</p>
+              )}
             </div>
           </CardContent>
         </Card>

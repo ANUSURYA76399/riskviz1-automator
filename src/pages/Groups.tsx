@@ -26,41 +26,78 @@ import { Link } from "react-router-dom";
 import { GroupComparison } from "@/components/groups/GroupComparison";
 import { GroupDetail } from "@/components/groups/GroupDetail";
 import { useState } from "react";
-import { 
-  detailedMetrics, 
-  riskScoresByPhase, 
-  riskTrends,
+
+interface GroupData {
+  name: string;
+  phase1: number;
+  phase2: number;
+  phase3: number;
+}
+
+interface Insight {
+  icon: "Check" | "AlertCircle" | "ArrowUpRight" | "Info";
+  text: string;
+  color: string;
+  confidence?: "High" | "Medium" | "Low";
+}
+
+interface Recommendation {
+  text: string;
+  rationale: string;
+  priority: "High" | "Medium" | "Low";
+}
+
+interface SignificantChange {
+  groupName: string;
+  change: number;
+  explanation: string;
+  confidence: "High" | "Medium" | "Low";
+}
+
+interface GroupsProps {
+  allGroups: string[];
+  locations: string[];
+  phases: string[];
+  groupData: GroupData[];
+  initialSelectedGroup?: string;
+  generateGroupComparisonInsights: (groups: string[]) => Insight[];
+  generateGroupRecommendations: (group: string) => Recommendation[];
+  getSignificantChanges: () => SignificantChange[];
+  getHighestRiskGroup: () => { name: string; score: number };
+  getLowestRiskGroup: () => { name: string; score: number };
+  getNotableChanges: () => { name: string; change: number }[];
+}
+
+const Groups = ({
+  allGroups,
+  locations,
+  phases,
+  groupData,
+  initialSelectedGroup = "",
   generateGroupComparisonInsights,
-  generateGroupRecommendations
-} from "@/data/risk";
-
-const allGroups = [
-  "Criminal Networks", 
-  "Demand Center Operators", 
-  "Community Leaders", 
-  "Law Enforcement", 
-  "Government Officials",
-  "NGO Representatives",
-  "Business Owners",
-  "Security Personnel",
-  "Tribal Communities",
-  "Religious Leaders"
-];
-
-const Groups = () => {
+  generateGroupRecommendations,
+  getSignificantChanges,
+  getHighestRiskGroup,
+  getLowestRiskGroup,
+  getNotableChanges
+}: GroupsProps) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedGroups, setSelectedGroups] = useState<string[]>([]);
   const [showPhaseComparison, setShowPhaseComparison] = useState(false);
   const [sortBy, setSortBy] = useState<"alphabetical" | "score">("alphabetical");
   const [selectedLocation, setSelectedLocation] = useState("All Locations");
-  const [selectedPhase, setSelectedPhase] = useState("Phase 3 (Latest)");
-  const [selectedGroup, setSelectedGroup] = useState("Criminal Networks");
+  const [selectedPhase, setSelectedPhase] = useState(phases[0] || "");
+  const [selectedGroup, setSelectedGroup] = useState(initialSelectedGroup || allGroups[0] || "");
   
   const comparisonInsights = generateGroupComparisonInsights(
-    selectedGroups.length > 0 ? selectedGroups : ["Criminal Networks", "Law Enforcement"]
+    selectedGroups.length > 0 ? selectedGroups : allGroups.slice(0, 2)
   );
   
   const recommendations = generateGroupRecommendations(selectedGroup);
+  const significantChanges = getSignificantChanges();
+  const highestRiskGroup = getHighestRiskGroup();
+  const lowestRiskGroup = getLowestRiskGroup();
+  const notableChanges = getNotableChanges();
 
   const filteredGroups = allGroups.filter(group => 
     group.toLowerCase().includes(searchQuery.toLowerCase())
@@ -83,7 +120,7 @@ const Groups = () => {
   };
 
   const getTrendDirection = (groupName: string) => {
-    const group = riskScoresByPhase.find(g => g.name === groupName);
+    const group = groupData.find(g => g.name === groupName);
     if (!group) return "stable";
     
     const phase2 = group.phase2;
@@ -106,6 +143,10 @@ const Groups = () => {
         return <span className="h-4 w-4">→</span>;
     }
   };
+
+  if (!allGroups.length) {
+    return <div className="min-h-screen bg-gray-50 p-8">No groups data available</div>;
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 p-8">
@@ -250,19 +291,18 @@ const Groups = () => {
                         onChange={(e) => setSelectedLocation(e.target.value)}
                       >
                         <option>All Locations</option>
-                        <option>Mumbai</option>
-                        <option>Delhi</option>
-                        <option>Chennai</option>
-                        <option>Kolkata</option>
+                        {locations.map((location, index) => (
+                          <option key={index}>{location}</option>
+                        ))}
                       </select>
                       <select 
                         className="rounded-md border border-gray-300 p-2 text-sm"
                         value={selectedPhase}
                         onChange={(e) => setSelectedPhase(e.target.value)}
                       >
-                        <option>Phase 3 (Latest)</option>
-                        <option>Phase 2</option>
-                        <option>Phase 1</option>
+                        {phases.map((phase, index) => (
+                          <option key={index}>{phase}</option>
+                        ))}
                       </select>
                     </div>
                   </div>
@@ -271,6 +311,7 @@ const Groups = () => {
                     selectedGroups={selectedGroups.length > 0 ? selectedGroups : filteredGroups}
                     sortBy={sortBy}
                     showPhaseComparison={showPhaseComparison}
+                    data={groupData}
                   />
                 </Card>
               </TabsContent>
@@ -295,7 +336,19 @@ const Groups = () => {
                       </Button>
                     </div>
                   </div>
-                  <GroupDetail selectedGroup={selectedGroup} />
+                  <GroupDetail 
+                    selectedGroup={selectedGroup} 
+                    phaseData={groupData.map(group => ({
+                      subject: group.name,
+                      phase1: group.phase1,
+                      phase2: group.phase2,
+                      phase3: group.phase3,
+                      fullMark: 10
+                    }))}
+                    metrics={[]} 
+                    locationData={[]} 
+                    averageScore={0} 
+                  />
                 </Card>
               </TabsContent>
               
@@ -399,65 +452,35 @@ const Groups = () => {
                   </div>
                   
                   <div className="space-y-4">
-                    <div className="border border-gray-200 rounded-md overflow-hidden">
-                      <div className="bg-gray-50 p-3 border-b border-gray-200">
-                        <div className="flex justify-between items-center">
-                          <span className="font-medium">Law Enforcement</span>
-                          <span className="text-green-600 font-medium">+2.1</span>
+                    {significantChanges.map((change, index) => (
+                      <div key={index} className="border border-gray-200 rounded-md overflow-hidden">
+                        <div className="bg-gray-50 p-3 border-b border-gray-200">
+                          <div className="flex justify-between items-center">
+                            <span className="font-medium">{change.groupName}</span>
+                            <span className={`font-medium ${
+                              change.change > 0 ? 'text-green-600' : 'text-red-600'
+                            }`}>
+                              {change.change > 0 ? '+' : ''}{change.change}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="p-3">
+                          <p className="text-sm">{change.explanation}</p>
+                          <div className="flex justify-between items-center mt-2">
+                            <span className="text-xs text-gray-500">Detected by AI analysis</span>
+                            <span className={`text-xs px-2 py-0.5 rounded-full ${
+                              change.confidence === 'High' 
+                                ? 'bg-green-100 text-green-800' 
+                                : change.confidence === 'Medium'
+                                ? 'bg-amber-100 text-amber-800'
+                                : 'bg-gray-100 text-gray-800'
+                            }`}>
+                              {change.confidence} confidence
+                            </span>
+                          </div>
                         </div>
                       </div>
-                      <div className="p-3">
-                        <p className="text-sm">
-                          Increased risk perception may be correlated with recent training programs and expanded jurisdiction. The change is statistically significant (p&lt;0.05) and consistent across multiple locations.
-                        </p>
-                        <div className="flex justify-between items-center mt-2">
-                          <span className="text-xs text-gray-500">Detected by AI analysis</span>
-                          <span className="text-xs px-2 py-0.5 bg-green-100 text-green-800 rounded-full">
-                            High confidence
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="border border-gray-200 rounded-md overflow-hidden">
-                      <div className="bg-gray-50 p-3 border-b border-gray-200">
-                        <div className="flex justify-between items-center">
-                          <span className="font-medium">Community Leaders</span>
-                          <span className="text-red-600 font-medium">-1.4</span>
-                        </div>
-                      </div>
-                      <div className="p-3">
-                        <p className="text-sm">
-                          Decreased risk perception potentially linked to awareness campaigns and community engagement initiatives. The change appears most pronounced in urban areas.
-                        </p>
-                        <div className="flex justify-between items-center mt-2">
-                          <span className="text-xs text-gray-500">Detected by AI analysis</span>
-                          <span className="text-xs px-2 py-0.5 bg-amber-100 text-amber-800 rounded-full">
-                            Medium confidence
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="border border-gray-200 rounded-md overflow-hidden">
-                      <div className="bg-gray-50 p-3 border-b border-gray-200">
-                        <div className="flex justify-between items-center">
-                          <span className="font-medium">Security Personnel</span>
-                          <span className="text-green-600 font-medium">+1.8</span>
-                        </div>
-                      </div>
-                      <div className="p-3">
-                        <p className="text-sm">
-                          Increasing trend aligns with heightened security measures and expanded surveillance operations. Change is most significant in Phase 3 data collection.
-                        </p>
-                        <div className="flex justify-between items-center mt-2">
-                          <span className="text-xs text-gray-500">Detected by AI analysis</span>
-                          <span className="text-xs px-2 py-0.5 bg-amber-100 text-amber-800 rounded-full">
-                            Medium confidence
-                          </span>
-                        </div>
-                      </div>
-                    </div>
+                    ))}
                   </div>
                 </Card>
               </TabsContent>
@@ -471,8 +494,8 @@ const Groups = () => {
                     <Users className="w-6 h-6 text-riskHigh" />
                   </div>
                   <div>
-                    <p className="font-semibold">Criminal Networks</p>
-                    <p className="text-sm text-gray-500">Avg. Score: 7.6</p>
+                    <p className="font-semibold">{highestRiskGroup.name}</p>
+                    <p className="text-sm text-gray-500">Avg. Score: {highestRiskGroup.score.toFixed(1)}</p>
                   </div>
                 </div>
               </Card>
@@ -484,8 +507,8 @@ const Groups = () => {
                     <Users className="w-6 h-6 text-riskLow" />
                   </div>
                   <div>
-                    <p className="font-semibold">Government Officials</p>
-                    <p className="text-sm text-gray-500">Avg. Score: 2.3</p>
+                    <p className="font-semibold">{lowestRiskGroup.name}</p>
+                    <p className="text-sm text-gray-500">Avg. Score: {lowestRiskGroup.score.toFixed(1)}</p>
                   </div>
                 </div>
               </Card>
@@ -493,18 +516,16 @@ const Groups = () => {
               <Card className="p-4">
                 <h3 className="text-sm font-medium text-gray-500 mb-2">Significant Changes</h3>
                 <div className="space-y-2">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm">Law Enforcement</span>
-                    <span className="text-sm text-green-600">+2.1</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm">Community Leaders</span>
-                    <span className="text-sm text-red-600">-1.4</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm">Security Personnel</span>
-                    <span className="text-sm text-green-600">+1.8</span>
-                  </div>
+                  {notableChanges.map((change, index) => (
+                    <div key={index} className="flex justify-between items-center">
+                      <span className="text-sm">{change.name}</span>
+                      <span className={`text-sm ${
+                        change.change > 0 ? 'text-green-600' : 'text-red-600'
+                      }`}>
+                        {change.change > 0 ? '+' : ''}{change.change.toFixed(1)}
+                      </span>
+                    </div>
+                  ))}
                 </div>
               </Card>
             </div>
